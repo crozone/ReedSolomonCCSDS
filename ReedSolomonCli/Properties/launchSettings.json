@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "ReedSolomonCli": {
+      "commandName": "Project"
+    },
+    "ReedSolomonCliEncode": {
+      "commandName": "Project",
+      "commandLineArgs": "-e"
+    },
+    "ReedSolomonCliDecode": {
+      "commandName": "Project",
+      "commandLineArgs": "-d"
+    }
+  }
+}
