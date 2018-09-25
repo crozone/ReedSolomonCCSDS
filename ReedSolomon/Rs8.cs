@@ -12,7 +12,7 @@ namespace ReedSolomon
         /// <summary>
         /// Calculates parity for data using Reed Solomon RS(255, 223)
         /// </summary>
-        public static void Encode(Span<byte> data, Span<byte> parity)
+        public static void Encode(ReadOnlySpan<byte> data, Span<byte> parity)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
             if (parity == null) throw new ArgumentNullException(nameof(parity));

@@ -23,8 +23,8 @@ Based on code by Phil Karn, KA9Q, 2002, used under the terms of the GNU General 
 
 # Methods
 
-### Rs8.Encode(Span<byte> data, Span<byte> parity)
-`public static void Encode(Span<byte> data, Span<byte> parity)`
+### Rs8.Encode(ReadOnlySpan<byte> data, Span<byte> parity)
+`public static void Encode(ReadOnlySpan<byte> data, Span<byte> parity)`
 
 Takes a `Span<byte>` `data` of length `Rs8.DataLength` (223), and writes the parity of it into a `Span<byte>` `parity` of length `Rs8.ParityLength` (32)
 
