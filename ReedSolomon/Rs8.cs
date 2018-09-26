@@ -6,7 +6,7 @@ namespace ReedSolomon
     public static class Rs8
     {
         public const int BlockLength = Nn;
-        public const int DataLength = BlockLength - ParityLength;
+        public const int DataLength = Nn - NRoots;
         public const int ParityLength = NRoots;
 
         /// <summary>
