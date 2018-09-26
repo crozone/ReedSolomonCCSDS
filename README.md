@@ -1,5 +1,5 @@
 # Reed-Solomon
-Reed Solomon (255, 223) CCSDS conventional (non-dual bias) representation in C#.
+Reed Solomon (255, 223) CCSDS in C#.
 
 # Overview
 This is an implementation of an RS (255, 223) encoder and decoder.
@@ -17,6 +17,8 @@ and a code generator with first consecutive root = 112 and a primitive element o
 
 The conventional polynomial form is used, which differs from the strict CCSDS
 specification which uses a dual-basis polynomial form.
+
+A summary of the CCSDS standard [can be found at their website.](https://public.ccsds.org/pubs/130x1g2.pdf) (Page 5-1)
 
 # Attribution
 Based on code by Phil Karn, KA9Q, 2002, used under the terms of the GNU General Public License (GPL).
@@ -65,4 +67,10 @@ This allows the use of precalculated lookup tables, as well as more tightly opti
 This library also takes advantage of the new `Span<T>` class introduced in dotnet Core 2.1,
 including the now safe `stackalloc` method (C# 7.2/7.3) for allocating temporary arrays.
 
-This means that both the `Encode` and `Decode` methods are zero-allocating, and work entirely on the stack.
+This allows the `Encode` and `Decode` methods to be zero-allocating, and work entirely on the stack. GC pressure and the associated performance impacts of collection are therefore eliminated.
+
+Benchmarks on an Intel(R) Core(TM) i7-8650U CPU (@ ~3GHz):
+
+* Encode: ~29,000 blocks per second = ~52 Mbps data throughput
+* Decode: ~13,000 blocks per second = ~23 Mbps data throughput
+
