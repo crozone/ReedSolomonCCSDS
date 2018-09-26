@@ -12,12 +12,22 @@ namespace ReedSolomon
         /// <summary>
         /// Calculates parity for data using Reed Solomon RS(255, 223)
         /// </summary>
-        public static void Encode(ReadOnlySpan<byte> data, Span<byte> parity)
+        public static void Encode(Span<byte> data, Span<byte> parity, bool dualBasis = false)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
             if (parity == null) throw new ArgumentNullException(nameof(parity));
             if (data.Length < DataLength) throw new ArgumentException($"{nameof(data)} must have at least length {DataLength}");
             if (parity.Length < ParityLength) throw new ArgumentException($"{nameof(parity)} must have at least length {ParityLength}");
+
+            if (dualBasis)
+            {
+                // Convert data from dual basis to conventional
+                //
+                for (int i = 0; i < (Nn - NRoots); i++)
+                {
+                    data[i] = TalToConventional[data[i]];
+                }
+            }
 
             // Zero parity
             //
@@ -50,6 +60,23 @@ namespace ReedSolomon
                     parity[NRoots - 1] = 0;
                 }
             }
+
+            if (dualBasis)
+            {
+                // Convert data back from conventional to dual basis
+                //
+                for (int i = 0; i < (Nn - NRoots); i++)
+                {
+                    data[i] = TalToDualBasis[data[i]];
+                }
+
+                // Convert parity from conventional to dual basis
+                //
+                for (int i = 0; i < NRoots; i++)
+                {
+                    parity[i] = TalToDualBasis[parity[i]];
+                }
+            }
         }
 
         /// <summary>
@@ -58,12 +85,22 @@ namespace ReedSolomon
         /// <param name="block">RS(255, 223) encoded block. The first 223 bytes must be data, the last 32 bytes must be parity.</param>
         /// <param name="erasurePositions">The positions of any known erasures. May be empty.</param>
         /// <returns></returns>
-        public static int Decode(Span<byte> block, Span<int> erasurePositions)
+        public static int Decode(Span<byte> block, Span<int> erasurePositions, bool dualBasis = false)
         {
             if (block == null) throw new ArgumentNullException(nameof(block));
             if (block.Length < BlockLength) throw new ArgumentException($"{nameof(block)} must have at least length {DataLength}");
 
             int erasureCount = erasurePositions.Length;
+
+            if (dualBasis)
+            {
+                // Convert block from dual basis to conventional
+                //
+                for (int i = 0; i < Nn; i++)
+                {
+                    block[i] = TalToConventional[block[i]];
+                }
+            }
 
             Span<byte> s = stackalloc byte[NRoots];
 
@@ -374,6 +411,16 @@ namespace ReedSolomon
                             erasurePositions[i] = loc[i];
                         }
                     }
+                }
+            }
+
+            if (dualBasis)
+            {
+                // Convert block from conventional to dual basis
+                //
+                for (int i = 0; i < Nn; i++)
+                {
+                    block[i] = TalToDualBasis[block[i]];
                 }
             }
 
