@@ -32,10 +32,11 @@ A common scenario is to create a single contiguous 255 byte block of memory, and
 and the last 32 bytes in as parity:
 
 ```
-Span<byte> block = (new byte[255]).AsSpan();
+// Create a 255 byte block
+Span<byte> block = (new byte[Rs8.BlockLength]).AsSpan();
 
 // or with C# 7.2
-// Span<byte> block = stackalloc byte[255];
+// Span<byte> block = stackalloc byte[Rs8.BlockLength];
 
 // Fill the first 223 bytes of block with data
 // ...
@@ -54,4 +55,14 @@ Another `Span<byte>` `erasurePositions` may be given, to specify erasure indexes
 Specifying erasures can increase the number of recoverable errors from 16 to 32. It may be `Span<byte>.Empty` if no erasures are known.
 
 If correction was possible, the function returns the number of bytes that were corrected.
+
 If correction was not possible (because there were too many errors), the function returns -1.
+
+# Performance
+This implementation differs from some others in that it **only** supports the common RS (255, 223) CCSDS encoding.
+This allows the use of precalculated lookup tables, as well as more tightly optimised code than the general case.
+
+This library also takes advantage of the new `Span<T>` class introduced in dotnet Core 2.1,
+including the now safe `stackalloc` method (C# 7.2/7.3) for allocating temporary arrays.
+
+This means that both the `Encode` and `Decode` methods are zero-allocating, and work entirely on the stack.
