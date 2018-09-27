@@ -102,14 +102,20 @@ namespace ReedSolomon
         /// Decodes an RS(255, 223) encoded block
         /// </summary>
         /// <param name="block">RS(255, 223) encoded block. The first 223 bytes must be data, the last 32 bytes must be parity.</param>
-        /// <param name="erasurePositions">The positions of any known erasures. May be empty.</param>
+        /// <param name="erasurePositions">The positions of any known erasures. May be null.</param>
+        /// <param name="dualBasis">If false, block will be treated as conventional form. If true, block will be treated as dual-basis .</param>
         /// <returns></returns>
         public static int Decode(Span<byte> block, Span<int> erasurePositions, bool dualBasis = false)
         {
             if (block == null) throw new ArgumentNullException(nameof(block));
             if (block.Length < BlockLength) throw new ArgumentException($"{nameof(block)} must have at least length {DataLength}");
 
-            int erasureCount = erasurePositions.Length;
+            int erasureCount = 0;
+
+            if (erasurePositions != null)
+            {
+                erasureCount = erasurePositions.Length;
+            }
 
             if (dualBasis)
             {

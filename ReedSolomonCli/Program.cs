@@ -39,7 +39,7 @@ namespace ReedSolomonCli
             {
                 StandardErrorWriter.WriteLine($"Enter {Rs8.BlockLength} bytes in integer (000) or hex (0x00) format, separated by whitespace or ','");
                 Span<byte> block = ReadArray(Rs8.BlockLength);
-                int bytesCorrected = Rs8.Decode(block, Span<int>.Empty, dualBasis);
+                int bytesCorrected = Rs8.Decode(block, null, dualBasis);
                 if (bytesCorrected > 0)
                 {
                     StandardErrorWriter.WriteLine($"Decoded ({bytesCorrected} bytes corrected):");
