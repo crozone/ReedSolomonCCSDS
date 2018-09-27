@@ -12,6 +12,25 @@ namespace ReedSolomon
         /// <summary>
         /// Calculates parity for data using Reed Solomon RS(255, 223)
         /// </summary>
+        /// <param name="block">Span to be encoded as a 255 byte block. The first 223 bytes must be data, the last 32 bytes will be written with parity.</param>
+        /// <param name="dualBasis">If false, parity will be written in conventional form. If true, parity will be written in dual-basis representation.</param>
+        public static void Encode(Span<byte> block, bool dualBasis = false)
+        {
+            if (block == null) throw new ArgumentNullException(nameof(block));
+            if (block.Length < BlockLength) throw new ArgumentException($"{nameof(block)} must have at least length {BlockLength}");
+
+            Span<byte> data = block.Slice(0, DataLength);
+            Span<byte> parity = block.Slice(DataLength, ParityLength);
+
+            Encode(data, parity, dualBasis);
+        }
+
+        /// <summary>
+        /// Calculates parity for data using Reed Solomon RS(255, 223)
+        /// </summary>
+        /// <param name="data">Span containing 223 bytes of input data.</param>
+        /// <param name="parity">Span that parity will be written to.</param>
+        /// <param name="dualBasis">If false, parity will be written in conventional form. If true, parity will be written in dual-basis representation.</param>
         public static void Encode(Span<byte> data, Span<byte> parity, bool dualBasis = false)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
