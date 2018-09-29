@@ -108,7 +108,7 @@ namespace ReedSolomon
         public static int Decode(Span<byte> block, Span<int> erasurePositions, bool dualBasis = false)
         {
             if (block == null) throw new ArgumentNullException(nameof(block));
-            if (block.Length < BlockLength) throw new ArgumentException($"{nameof(block)} must have at least length {DataLength}");
+            if (block.Length < BlockLength) throw new ArgumentException($"{nameof(block)} must have at least length {BlockLength}");
 
             int erasureCount = 0;
 
