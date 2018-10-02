@@ -26,15 +26,23 @@ Based on code by Phil Karn, KA9Q, 2002, used under the terms of the GNU General 
 
 # Methods
 
+### Rs8.Encode(Span<byte> block, bool dualBasis = false)
+`public static void Encode(Span<byte> block, bool dualBasis = false)`
+  
+Takes a `Span<byte>` `block` of length `Rs8.BlockLength` (255), of which the first 223 bytes are data, and the last 32 bytes are space for parity. Parity is calculated for data, and then written to the last 32 bytes of the block.
+
+This overload is the equivalent of calling:
+
+`Encode(block.Slice(0, Rs8.DataLength), block.Slice(Rs8.DataLength, Rs8.ParityLength), dualBasis);`
+
 ### Rs8.Encode(Span<byte> data, Span<byte> parity, bool dualBasis = false)
 `public static void Encode(Span<byte> data, Span<byte> parity, bool dualBasis = false)`
 
 Takes a `Span<byte>` `data` of length `Rs8.DataLength` (223), and writes the parity of it into a `Span<byte>` `parity` of length `Rs8.ParityLength` (32).
 
-Conventional form is used by default, but can be switched to dual-basis by setting `dualBasis` to `true`.
+Conventional form is used by default, but can be switched to dual-basis form by setting `dualBasis` to `true`.
 
-A common scenario is to create a single contiguous 255 byte block of memory, and use the `Span<T>` slicing methods to pass the first 223 bytes in as data,
-and the last 32 bytes in as parity:
+A common scenario is to create a single contiguous 255 byte block of memory, fill the first 223 bytes with data, and pass the whole thing to the first overload of the encode method:
 
 ```
 // Create a 255 byte block
@@ -46,8 +54,8 @@ Span<byte> block = (new byte[Rs8.BlockLength]).AsSpan();
 // Fill the first 223 bytes of block with data
 // ...
 
-// Encode the block
-Rs8.Encode(block.Slice(0, Rs8.DataLength), block.Slice(Rs8.DataLength, Rs8.ParityLength));
+// Encode the block, filling the last 32 bytes with parity data
+Rs8.Encode(block);
 
 // The block is now encoded.
 ```
@@ -79,3 +87,22 @@ Benchmarks on an Intel(R) Core(TM) i7-8650U CPU (@ ~3GHz):
 * Encode: ~29,000 blocks per second = ~52 Mbps data throughput
 * Decode: ~13,000 blocks per second = ~23 Mbps data throughput
 
+# CLI Tool:
+
+A CLI tool is provided for basic command line encoding and decoding.
+
+### Usage:
+
+-v : Enable verbose output. All log output is written to standard error.
+
+-t : Enable text mode for input and output. In this mode, input should be formatted as hexedecimal ASCII (each byte is two characters 0-9,a-f,A-F). All non-alphanumeric characters will be ignored on input. Output is formatted the same, with newlines after every 16 bytes.
+
+-b : Enable binary mode for input and output (default). In this mode, input and output will be read as raw bytes with no conversion performed.
+
+-x : Enable dual-basis representation for parity.
+
+-c : Enable conventional representation for parity (default)
+
+-i <path> : Read from a file specifid by path instead of standard input. '-' may be given as the path to read from standard input anyway.
+  
+-o <path> : Write to a file specified by path instead of standard output. '-' may be given as the path to write to standard output anyway.
