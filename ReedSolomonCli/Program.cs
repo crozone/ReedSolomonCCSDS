@@ -113,7 +113,7 @@ namespace ReedSolomonCli
             }
             else if (args.Contains("-d"))
             {
-                if (verbose) Console.Error.WriteLine($"Waiting for {Rs8.DataLength} bytes {(textMode ? "in hex text" : "in byte stream")}");
+                if (verbose) Console.Error.WriteLine($"Waiting for {Rs8.BlockLength} bytes {(textMode ? "in hex text" : "in byte stream")}");
 
                 // Alloc the block on the stack
                 //
