@@ -144,11 +144,11 @@ namespace ReedSolomonCli
                 //
                 if (bytesCorrected >= 0)
                 {
-                    Console.Error.WriteLine($"{bytesCorrected} corrected (success)");
+                    Console.Error.WriteLine($"Decoded. {bytesCorrected} errors corrected.");
                 }
                 else
                 {
-                    Console.Error.WriteLine("Unrecoverable (failure)");
+                    Console.Error.WriteLine($"Unrecoverable, errors >{Rs8.ParityLength / 2}.");
                 }
 
                 // Write output
@@ -217,7 +217,7 @@ namespace ReedSolomonCli
 
                 for (int i = 0; i < span.Length; i++)
                 {
-                    if (i % 16 == 0)
+                    if (i > 0 && i % 16 == 0)
                     {
                         streamWriter.WriteLine();
                     }
