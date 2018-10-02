@@ -5,11 +5,11 @@
     },
     "ReedSolomonCliEncode": {
       "commandName": "Project",
-      "commandLineArgs": "-e"
+      "commandLineArgs": "-e -v -t"
     },
     "ReedSolomonCliDecode": {
       "commandName": "Project",
-      "commandLineArgs": "-d"
+      "commandLineArgs": "-d -v -t"
     }
   }
 }
