@@ -8,155 +8,252 @@ namespace ReedSolomonCli
 {
     public static class Program
     {
-        public static StreamWriter StandardOutWriter = new StreamWriter(Console.OpenStandardOutput());
-        public static StreamWriter StandardErrorWriter = new StreamWriter(Console.OpenStandardError());
-        public static StreamReader StandardInputReader = new StreamReader(Console.OpenStandardInput());
-
         public static void Main(string[] args)
         {
-            StandardErrorWriter.AutoFlush = true;
-            StandardOutWriter.AutoFlush = true;
-
+            bool verbose = false;
             bool dualBasis = false;
+            bool textMode = false;
 
-            if (args.Contains("-b"))
+            string inputFilePath = null;
+            string outputFilePath = null;
+
+            // Parse args
+            //
+            if (args.Length > 0)
             {
-                dualBasis = true;
+                verbose = args.Any(s => s.StartsWith("-v"));
+
+                if (args.Contains("-t"))
+                {
+                    // Treat STDIN and STDOUT as hex encoded text streams.
+                    textMode = true;
+                }
+                else if (args.Contains("-b"))
+                {
+                    // Treat STDIN and STDOUT as binary streams.
+                    //
+                    textMode = false;
+                }
+
+                if (args.Contains("-x"))
+                {
+                    dualBasis = true;
+                }
+                else if (args.Contains("-c"))
+                {
+                    dualBasis = false;
+                }
+
+                // Get input file path
+                //
+                inputFilePath = args.SkipWhile(s => s != "-i").ElementAtOrDefault(1);
+
+                if (inputFilePath == "-")
+                {
+                    inputFilePath = null;
+                }
+
+                // Get output file path
+                //
+                outputFilePath = args.SkipWhile(s => s != "-o").ElementAtOrDefault(1);
+
+                if (outputFilePath == "-")
+                {
+                    outputFilePath = null;
+                }
             }
 
             if (args.Contains("-e"))
             {
-                StandardErrorWriter.WriteLine($"Enter {Rs8.DataLength} bytes in integer (000) or hex (0x00) format, separated by whitespace or ','");
-                byte[] input = ReadArray(Rs8.DataLength);
+                if (verbose) Console.Error.WriteLine($"Waiting for {Rs8.DataLength} bytes {(textMode ? "in hex text" : "in byte stream")}");
+
+                // Alloc the block on the stack
+                //
                 Span<byte> block = stackalloc byte[Rs8.BlockLength];
-                input.CopyTo(block);
-                Rs8.Encode(block.Slice(0, Rs8.DataLength), block.Slice(Rs8.DataLength, Rs8.ParityLength), dualBasis);
-                StandardErrorWriter.WriteLine("Encoded:");
-                StandardErrorWriter.WriteLine();
-                WriteSpan(block);
+
+                // Read in data
+                //
+                using (Stream inputStream = GetInputStream(inputFilePath))
+                {
+                    ReadToSpan(block.Slice(0, Rs8.DataLength), inputStream, textMode);
+                }
+
+                if (verbose) Console.Error.WriteLine("Encoding ...");
+
+                // Encode the block
+                //
+                Rs8.Encode(block, dualBasis);
+
+                if (verbose) Console.Error.WriteLine("Encoded.");
+
+                // Write output
+                //
+                using (Stream outputStream = GetOutputStream(outputFilePath))
+                {
+                    WriteFromSpan(block, outputStream, textMode);
+                }
             }
             else if (args.Contains("-d"))
             {
-                StandardErrorWriter.WriteLine($"Enter {Rs8.BlockLength} bytes in integer (000) or hex (0x00) format, separated by whitespace or ','");
-                Span<byte> block = ReadArray(Rs8.BlockLength);
-                int bytesCorrected = Rs8.Decode(block, null, dualBasis);
-                if (bytesCorrected > 0)
+                if (verbose) Console.Error.WriteLine($"Waiting for {Rs8.DataLength} bytes {(textMode ? "in hex text" : "in byte stream")}");
+
+                // Alloc the block on the stack
+                //
+                Span<byte> block = stackalloc byte[Rs8.BlockLength];
+
+                // Read in data
+                //
+                using (Stream inputStream = GetInputStream(inputFilePath))
                 {
-                    StandardErrorWriter.WriteLine($"Decoded ({bytesCorrected} bytes corrected):");
+                    ReadToSpan(block, inputStream, textMode);
+                }
+
+                // Decode the block, correcting errors.
+                //
+                int bytesCorrected = Rs8.Decode(block, null, dualBasis);
+
+                // Check if the block was successfully recovered
+                //
+                if (bytesCorrected >= 0)
+                {
+                    Console.Error.WriteLine($"Decoded ({bytesCorrected} bytes corrected):");
                 }
                 else
                 {
-                    StandardErrorWriter.WriteLine("Decoded (unrecoverable):");
+                    Console.Error.WriteLine("Decoded (unrecoverable):");
                 }
-                StandardErrorWriter.WriteLine();
-                WriteSpan(block);
+
+                // Write output
+                //
+                using (Stream outputStream = GetOutputStream(outputFilePath))
+                {
+                    WriteFromSpan(block, outputStream, textMode);
+                }
             }
             else
             {
-                StandardErrorWriter.WriteLine("Arg is required. Use -e for encode or -d for decode.");
+                Console.Error.WriteLine("Must specify encode or decode");
             }
         }
 
-        private static void WriteSpan(Span<byte> span)
+        private static Stream GetInputStream(string filePath)
         {
-            for (int i = 0; i < span.Length; i++)
+            // Select input stream
+            //
+            Stream inputStream;
+            if (filePath == null)
             {
-                if (i % 16 == 0)
-                {
-                    StandardOutWriter.WriteLine();
-                }
-
-                StandardOutWriter.Write("0x{0:X2}", span[i]);
-
-                if (i < span.Length - 1)
-                {
-                    StandardOutWriter.Write(", ");
-                }
+                inputStream = Console.OpenStandardInput();
             }
-            StandardOutWriter.WriteLine();
+            else
+            {
+                inputStream = File.OpenRead(filePath);
+            }
+
+            return inputStream;
         }
 
-        private static byte[] ReadArray(int byteCount)
+        private static Stream GetOutputStream(string filePath)
         {
-            int byteIndex = 0;
-            byte[] bytesRead = new byte[byteCount];
+            // Select output stream
+            //
+            Stream outputStream;
+            if (filePath == null)
+            {
+                outputStream = Console.OpenStandardOutput();
+            }
+            else
+            {
+                outputStream = File.OpenWrite(filePath);
+            }
 
-            int charIndex = 0;
-            Span<char> charBuffer = stackalloc char[4];
+            return outputStream;
+        }
 
-            while (byteIndex < byteCount) {
-                int charCode = StandardInputReader.Read();
-                if (charCode < 0)
+        private static void WriteFromSpan(Span<byte> span, Stream stream, bool textMode)
+        {
+            if (textMode)
+            {
+                StreamWriter streamWriter = new StreamWriter(stream);
+
+                for (int i = 0; i < span.Length; i++)
                 {
-                    break;
-                }
-                else
-                {
-                    char character = (char)charCode;
-
-                    if (char.IsLetterOrDigit(character) || character == '-')
+                    if (i % 16 == 0)
                     {
-                        if (charIndex < charBuffer.Length)
-                        {
-                            charBuffer[charIndex] = character;
-                        }
-
-                        charIndex++;
+                        streamWriter.WriteLine();
                     }
-                    else if (char.IsWhiteSpace(character) || character == ',')
-                    {
-                        if (charIndex > charBuffer.Length)
-                        {
-                            StandardErrorWriter.WriteLine($"Sequence too long ({charIndex} > {charBuffer.Length})");
-                            charIndex = 0;
-                        }
-                        else if (charIndex > 0)
-                        {
-                            Span<char> symbol = charBuffer.Slice(0, charIndex);
 
-                            bool parsed;
-                            if (symbol.Length > 2 && symbol[0] == '0'
-                                && (symbol[1] == 'x' || symbol[1] == 'X')
-                                && int.TryParse(symbol.Slice(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int parsedByte))
+                    streamWriter.Write("{0:X2}", span[i]);
+                }
+                streamWriter.WriteLine();
+                streamWriter.Flush();
+            }
+            else
+            {
+                stream.Write(span);
+                stream.Flush();
+            }
+        }
+
+        private static void ReadToSpan(Span<byte> span, Stream stream, bool textMode)
+        {
+            if (textMode)
+            {
+                StreamReader streamReader = new StreamReader(stream);
+
+                int byteIndex = 0;
+
+                int charIndex = 0;
+                Span<char> charBuffer = stackalloc char[2];
+
+                while (byteIndex < span.Length)
+                {
+                    int charCode = streamReader.Read();
+                    if (charCode < 0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        char character = (char)charCode;
+
+                        if (char.IsLetterOrDigit(character))
+                        {
+                            if (charIndex < charBuffer.Length)
                             {
-                                parsed = true;
-                            }
-                            else if (int.TryParse(symbol, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedByte))
-                            {
-                                parsed = true;
+                                charBuffer[charIndex] = character;
+                                charIndex++;
                             }
                             else
                             {
-                                parsedByte = -1;
-                                parsed = false;
-                                StandardErrorWriter.WriteLine($"Unrecognised sequence \"{new string(symbol)}\"");
-                            }
-
-                            charIndex = 0;
-
-                            if (parsed)
-                            {
-                                if (parsedByte >= byte.MinValue && parsedByte <= byte.MaxValue)
+                                if (byte.TryParse(charBuffer, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out byte parsedByte))
                                 {
-                                    bytesRead[byteIndex] = (byte)parsedByte;
+                                    span[byteIndex] = parsedByte;
                                     byteIndex++;
                                 }
                                 else
                                 {
-                                    StandardErrorWriter.WriteLine($"Input {parsedByte} not {byte.MinValue} -> { byte.MaxValue}");
+                                    Console.Error.WriteLine($"Unrecognised sequence \"{new string(charBuffer)}\"");
                                 }
+                                charIndex = 0;
                             }
                         }
-                    }
-                    else if (character == '\x04')
-                    {
-                        // Ctrl-D
-                        break;
+                        else if (character == '\x04')
+                        {
+                            // Ctrl-D
+                            break;
+                        }
                     }
                 }
             }
-
-            return bytesRead;
+            else
+            {
+                int bytesRead = 0;
+                while (bytesRead < span.Length)
+                {
+                    bytesRead += stream.Read(span.Slice(bytesRead));
+                }
+            }
         }
     }
 }
