@@ -91,7 +91,11 @@ Benchmarks on an Intel(R) Core(TM) i7-8650U CPU (@ ~3GHz):
 
 A CLI tool is provided for basic command line encoding and decoding.
 
-### Usage:
+### Usage
+
+-e : Encode mode. 223 bytes will be read from input, encoded, and then written to the output.
+
+-d : Decode mode. 255 bytes will be read from input, decoded, and then written to output. Some additional information will be written to standard error regarding errors corrected.
 
 -v : Enable verbose output. All log output is written to standard error.
 
