@@ -8,7 +8,7 @@ namespace ReedSolomonCli
 {
     public static class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
             bool verbose = false;
             bool dualBasis = false;
@@ -73,9 +73,17 @@ namespace ReedSolomonCli
 
                 // Read in data
                 //
-                using (Stream inputStream = GetInputStream(inputFilePath))
+                try
                 {
-                    ReadToSpan(block.Slice(0, Rs8.DataLength), inputStream, textMode);
+                    using (Stream inputStream = GetInputStream(inputFilePath))
+                    {
+                        ReadToSpan(block.Slice(0, Rs8.DataLength), inputStream, textMode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error reading from {inputFilePath ?? "stdin"}: {ex.Message}");
+                    return (int)ReturnCodes.ExIoErr;
                 }
 
                 if (verbose) Console.Error.WriteLine("Encoding ...");
@@ -88,10 +96,20 @@ namespace ReedSolomonCli
 
                 // Write output
                 //
-                using (Stream outputStream = GetOutputStream(outputFilePath))
+                try
                 {
-                    WriteFromSpan(block, outputStream, textMode);
+                    using (Stream outputStream = GetOutputStream(outputFilePath))
+                    {
+                        WriteFromSpan(block, outputStream, textMode);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error writing to {outputFilePath ?? "stdout"}: {ex.Message}");
+                    return (int)ReturnCodes.ExCantCreate;
+                }
+
+                return (int)ReturnCodes.ExOk;
             }
             else if (args.Contains("-d"))
             {
@@ -103,10 +121,20 @@ namespace ReedSolomonCli
 
                 // Read in data
                 //
-                using (Stream inputStream = GetInputStream(inputFilePath))
+                try
                 {
-                    ReadToSpan(block, inputStream, textMode);
+                    using (Stream inputStream = GetInputStream(inputFilePath))
+                    {
+                        ReadToSpan(block, inputStream, textMode);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error reading from {outputFilePath ?? "stdin"}: {ex.Message}");
+                    return (int)ReturnCodes.ExIoErr;
+                }
+
+                if (verbose) Console.Error.WriteLine("Decoding ...");
 
                 // Decode the block, correcting errors.
                 //
@@ -116,23 +144,34 @@ namespace ReedSolomonCli
                 //
                 if (bytesCorrected >= 0)
                 {
-                    Console.Error.WriteLine($"Decoded ({bytesCorrected} bytes corrected):");
+                    Console.Error.WriteLine($"{bytesCorrected} corrected (success)");
                 }
                 else
                 {
-                    Console.Error.WriteLine("Decoded (unrecoverable):");
+                    Console.Error.WriteLine("Unrecoverable (failure)");
                 }
 
                 // Write output
                 //
-                using (Stream outputStream = GetOutputStream(outputFilePath))
+                try
                 {
-                    WriteFromSpan(block, outputStream, textMode);
+                    using (Stream outputStream = GetOutputStream(outputFilePath))
+                    {
+                        WriteFromSpan(block, outputStream, textMode);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error writing to {outputFilePath ?? "stdout"}: {ex.Message}");
+                    return (int)ReturnCodes.ExCantCreate;
+                }
+
+                return (int)ReturnCodes.ExOk;
             }
             else
             {
                 Console.Error.WriteLine("Must specify encode or decode");
+                return (int)ReturnCodes.ExUsage;
             }
         }
 
