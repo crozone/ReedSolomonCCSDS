@@ -64,11 +64,8 @@ namespace ReedSolomon
                     }
                 }
 
-                //memmove(&parity[0], &parity[1], sizeof(unsigned char) * (NROOTS - 1));
-                for (int j = 0; j < NRoots - 1; j++)
-                {
-                    parity[j] = parity[j + 1];
-                }
+                //memmove(&parity[0], &parity[1], sizeof(unsigned char) * (NRoots - 1));
+                parity.Slice(1, NRoots - 1).CopyTo(parity);
 
                 if (feedback != A0)
                 {
@@ -239,10 +236,7 @@ namespace ReedSolomon
                         // B(x) <-- x*B(x)
                         // b[0] -> b[1]
                         //memmove(&b[1], &b[0], NRoots * sizeof(b[0]));
-                        for (int i = NRoots - 1; i >= 0; i--)
-                        {
-                            b[i + 1] = b[i];
-                        }
+                        b.Slice(0, NRoots).CopyTo(b.Slice(1));
 
                         b[0] = A0;
                     }
@@ -277,15 +271,12 @@ namespace ReedSolomon
                             // B(x) <-- x*B(x)
                             // b[0] -> b[1]
                             //memmove(&b[1], b, NRoots * sizeof(b[0]));
-                            for (int i = NRoots - 1; i >= 0 ; i--)
-                            {
-                                b[i + 1] = b[i];
-                            }
+                            b.Slice(0, NRoots).CopyTo(b.Slice(1));
 
                             b[0] = A0;
                         }
 
-                        //memcpy(lambda, t, (kNRoots + 1) * sizeof(t[0]));
+                        //memcpy(lambda, t, (NRoots + 1) * sizeof(t[0]));
                         t.CopyTo(lambda);
                     }
                 }
