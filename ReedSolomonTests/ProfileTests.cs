@@ -117,7 +117,7 @@ namespace ReedSolomonTests
             Stopwatch sw = new Stopwatch();
             
             
-            int iterations = 100000;
+            int iterations = 10000;
             int correctedByteCount = 0;
             for (int i = 0; i < iterations; i++)
             {
@@ -163,7 +163,7 @@ namespace ReedSolomonTests
         [Fact]
         public void TestRandomFuzz()
         {
-            int iterations = 100;
+            int iterations = 10;
             output.WriteLine($"Starting test from 0.0 -> 1.0 chance with {iterations} iterations");
             for (double i = 0; i <= 1; i += 0.01)
             {
