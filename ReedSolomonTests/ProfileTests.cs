@@ -1,3 +1,5 @@
+// Author: Ryan Crosby, September 2018
+
 using System;
 using Xunit;
 

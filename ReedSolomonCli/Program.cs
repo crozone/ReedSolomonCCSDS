@@ -1,4 +1,6 @@
-﻿using ReedSolomon;
+﻿// Author: Ryan Crosby, September 2018
+
+using ReedSolomon;
 using System;
 using System.Globalization;
 using System.IO;

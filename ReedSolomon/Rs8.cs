@@ -1,4 +1,18 @@
-﻿using System;
+﻿// Author: Ryan Crosby, September 2018
+//
+// Attribution:
+// 
+// Derived from code from "General purpose Reed-Solomon decoder for 8-bit symbols or less"
+// Copyright 2003 Phil Karn, KA9Q
+//
+// Original files:
+//
+// /decode_rs_8.c
+// /encode_rs_8.c
+// http://www.ka9q.net/code/fec/fec-3.0.1.tar.bz2
+//
+
+using System;
 using static ReedSolomon.Precomputed;
 
 namespace ReedSolomon

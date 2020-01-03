@@ -1,4 +1,6 @@
-﻿namespace ReedSolomon
+﻿// Author: Ryan Crosby, September 2018
+
+namespace ReedSolomon
 {
     /// <summary>
     /// Precomputed values for CCSDS RS (255, 223)

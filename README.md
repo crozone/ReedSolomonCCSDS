@@ -22,13 +22,19 @@ A summary of the CCSDS standard [can be found at their website.](https://public.
 In depth reference [is also available](https://public.ccsds.org/Pubs/131x0b3e1.pdf) (Page 4-1)
 
 # Attribution
-Based on code by Phil Karn, KA9Q, 2002, used under the terms of the GNU General Public License (GPL).
+The Reed-Solomon encoder and decoder, found in `/ReedSolomon/Rs8.cs`, is derived from code from "General purpose Reed-Solomon decoder for 8-bit symbols or less", Copyright 2003 Phil Karn, KA9Q.
+
+It is used under the terms of the GNU Lesser General Public License (LGPL). See the file "LICENSE" in this package for license details.
+
+The version used for this derivation can be found [here](http://www.ka9q.net/code/fec/fec-3.0.1.tar.bz2).
+
+The latest version of the original source code can be found [here](http://www.ka9q.net/code/fec/).
 
 # Methods
 
 ### Rs8.Encode(Span<byte> block, bool dualBasis = false)
 `public static void Encode(Span<byte> block, bool dualBasis = false)`
-  
+
 Takes a `Span<byte>` `block` of length `Rs8.BlockLength` (255), of which the first 223 bytes are data, and the last 32 bytes are space for parity. Parity is calculated for data, and then written to the last 32 bytes of the block.
 
 This overload is the equivalent of calling:
@@ -108,5 +114,5 @@ A CLI tool is provided for basic command line encoding and decoding.
 -c : Enable conventional representation for parity (default)
 
 -i <path> : Read from a file specifid by path instead of standard input. '-' may be given as the path to read from standard input anyway.
-  
+
 -o <path> : Write to a file specified by path instead of standard output. '-' may be given as the path to write to standard output anyway.
